@@ -5,7 +5,7 @@ import images_qr  # necessary to load icons properly
 import sys
 
 # Import QApplication and the required widgets from PyQt5.QtWidgets
-from PyQt5.QtCore import Qt, pyqtRemoveInputHook
+from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, \
     QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QFileDialog, \
@@ -14,8 +14,6 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, \
 
 __version__ = '0.1'
 __author__ = 'Anchey Peng'
-
-# Create a subclass of QMainWindow to setup the GUI
 
 
 class DetectorUi(QMainWindow):
@@ -123,7 +121,48 @@ class DetectorUi(QMainWindow):
         self.outputView.setFocus()
 
 
-# Controller Code
+class SubprocessWorker(QObject):
+    writeOutput = pyqtSignal(str)
+    finished = pyqtSignal()
+
+    def __init__(self, scriptDir, dataDir, spectDir):
+        super().__init__()
+        self.scriptDir = scriptDir
+        self.inferencePipeline = ["python", "-u", "Inference_pipeline.py",
+                                  "--process_data", "--make_predictions", "--model_0",
+                                  "2_Stage_Model/first_stage.pt",
+                                  "--model_1", "2_Stage_Model/second_stage.pt",
+                                  "--data_dir", dataDir, "--spect_out", spectDir]
+
+        self.dataGeneration = ["python", "-u", "Inference_pipeline.py",
+                               "--process_data", "--data_dir", dataDir, "--spect_out", spectDir]
+
+        # uses dataDir for the spect directory bc spect output does not work properly
+        self.modelPredictions = ["python", "-u", "Inference_pipeline.py",
+                                 "--make_predictions",
+                                 "--model_0", "2_Stage_Model/first_stage.pt",
+                                 "--model_1", "2_Stage_Model/second_stage.pt",
+                                 "--spect_path", dataDir]
+
+    def run(self):
+
+        steps = [self.inferencePipeline,
+                 self.dataGeneration, self.modelPredictions]
+
+        for step in steps:
+            process = subprocess.Popen(
+                step, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=self.scriptDir)
+            for line in iter(process.stdout.readline, b''):
+                strLine = line.decode(sys.stdout.encoding)
+
+                # comment this line out before bundling to exe
+                # sys.stdout.write(strLine)
+                self.writeOutput.emit(strLine)
+
+        print("Detector run has completed. ")
+
+        self.finished.emit()
+
 
 class GuiController:
     """Gui Controller Class"""
@@ -140,50 +179,21 @@ class GuiController:
         dataDir = self._view.soundFolderEdit.text()
         spectDir = self._view.outputFolderEdit.text()
 
-        inferencePipeline = ["python", "-u", "Inference_pipeline.py",
-                             "--process_data", "--make_predictions", "--model_0",
-                             "2_Stage_Model/first_stage.pt",
-                             "--model_1", "2_Stage_Model/second_stage.pt",
-                             "--data_dir", dataDir, "--spect_out", spectDir]
+        # Create QThread object
+        self.thread = QThread()
+        # Create a worker object
+        self.worker = SubprocessWorker(scriptDir, dataDir, spectDir)
 
-        dataGeneration = ["python", "-u", "Inference_pipeline.py",
-                          "--process_data", "--data_dir", dataDir, "--spect_out", spectDir]
-
-        # uses dataDir for the spect directory bc spect output does not work properly
-        modelPredictions = ["python", "-u", "Inference_pipeline.py",
-                            "--make_predictions",
-                            "--model_0", "2_Stage_Model/first_stage.pt",
-                            "--model_1", "2_Stage_Model/second_stage.pt",
-                            "--spect_path", dataDir]
-
-        process = subprocess.Popen(
-            inferencePipeline, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=scriptDir)
-        for line in iter(process.stdout.readline, b''):
-            strLine = line.decode(sys.stdout.encoding)
-
-            # comment this line out before bundling to exe
-            sys.stdout.write(strLine)
-            self._view.appendDisplayText(strLine)
-
-        process = subprocess.Popen(
-            dataGeneration, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=scriptDir)
-        for line in iter(process.stdout.readline, b''):
-            strLine = line.decode(sys.stdout.encoding)
-
-            # comment this line out before bundling to exe
-            sys.stdout.write(strLine)
-            self._view.appendDisplayText(strLine)
-
-        process = subprocess.Popen(
-            modelPredictions, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=scriptDir)
-        for line in iter(process.stdout.readline, b''):
-            strLine = line.decode(sys.stdout.encoding)
-
-            # comment this line out before bundling to exe
-            sys.stdout.write(strLine)
-            self._view.appendDisplayText(strLine)
-
-        print("Detector run has completed. ")
+        # Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Connect signals and slots
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.writeOutput.connect(self._view.appendDisplayText)
+        # Start the thread
+        self.thread.start()
 
     def _openFolderSelect(self, lineEdit):
         """Opens folder select dialog and sets the text of lineEdit to the folder path"""
@@ -217,9 +227,6 @@ OSError: [WinError 123] The filename, directory name, or volume label syntax is 
 '''
 
 
-# Client code
-
-
 def main():
     """Main function."""
 
@@ -227,9 +234,6 @@ def main():
     # Necessary to load windows taskbar icon
     myappid = u'ElephantListeningProject.Detector.GUI.0.1'  # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-
-    # Disable input loop message
-    pyqtRemoveInputHook()
 
     # Create an instance of QApplication
     detectorUi = QApplication(sys.argv)
