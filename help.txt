@@ -1,0 +1,14 @@
+Basic Instructions:
+
+1. Select a script folder. This is the folder where the detector python script is located.
+
+2. Select a sound folder. This is the folder where the sound files are located.
+
+3. Select an output folder. This is the folder where the spectrograms will be created. The output folder cannot be the same folder as the sound folder
+
+4. Click "Run" to run the detector script with the provided folders. The output will be shown in the GUI's text field. The elapsed time will also be shown, and the GUI will indicate when the run has completed. If the elapsed time is still increasing, the detector script is still running.
+
+
+Additional Information:
+
+For the GUI to run the detector script, the detector script must be able to run on the computer's default Python installation. The Python version must be 64-bit, and the detector has been tested on Python 3.8.1, although it may run on other 64-bit versions as well. If the detector script's dependencies are not already installed on the computer, they can be installed by clicking the "Install Dependencies" button.
