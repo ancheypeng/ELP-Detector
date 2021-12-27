@@ -5,9 +5,9 @@ block_cipher = None
 
 
 a = Analysis(['gui.py'],
-             pathex=['./venv/Lib/site-packages'],
+             pathex=[],
              binaries=[],
-             datas=[],
+             datas=[('help.txt', '.'), ('detector_requirements.txt', '.')],
              hiddenimports=[],
              hookspath=[],
              hooksconfig={},

@@ -1,6 +1,6 @@
 Create single-file exe by running:
 
-    pyinstaller.exe --onefile --icon=icon.ico gui.py
+    pyinstaller --onefile gui.spec
 
 Installing dependencies must be on an x64 Python installation.
 

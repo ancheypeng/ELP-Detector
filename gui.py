@@ -30,7 +30,7 @@ class DetectorUi(QMainWindow):
 
         # Set the central widget and the general layout
         self.generalLayout = QVBoxLayout()
-        self.generalLayout.setContentsMargins(20, 20, 20, 20)
+        self.generalLayout.setContentsMargins(10, 10, 10, 10)
         self._centralWidget = QWidget(self)
         self.setCentralWidget(self._centralWidget)
         self._centralWidget.setLayout(self.generalLayout)
@@ -49,7 +49,7 @@ class DetectorUi(QMainWindow):
         # Create the detector script folder widget
         scriptFolderLabel = QLabel("Script Folder: ")
         self.scriptFolderEdit = QLineEdit()
-        self.scriptFolderEdit.setMinimumWidth(600)
+        self.scriptFolderEdit.setMinimumWidth(300)
         self.scriptFolderButton = QPushButton('Browse')
 
         folderSelectLayout.addWidget(scriptFolderLabel, 0, 0)
@@ -59,7 +59,7 @@ class DetectorUi(QMainWindow):
         # Create the sound folder widget
         soundFolderLabel = QLabel("Sound File Folder: ")
         self.soundFolderEdit = QLineEdit()
-        self.soundFolderEdit.setMinimumWidth(600)
+        self.soundFolderEdit.setMinimumWidth(300)
         self.soundFolderButton = QPushButton('Browse')
 
         folderSelectLayout.addWidget(soundFolderLabel, 1, 0)
@@ -69,7 +69,7 @@ class DetectorUi(QMainWindow):
         # Create the output folder widget
         outputFolderLabel = QLabel("Output Folder: ")
         self.outputFolderEdit = QLineEdit()
-        self.outputFolderEdit.setMinimumWidth(600)
+        self.outputFolderEdit.setMinimumWidth(300)
         self.outputFolderButton = QPushButton('Browse')
 
         folderSelectLayout.addWidget(outputFolderLabel, 2, 0)
@@ -84,13 +84,13 @@ class DetectorUi(QMainWindow):
         btnLayout = QHBoxLayout()
 
         self.helpBtn = QPushButton('Help')
-        self.helpBtn.setFixedWidth(200)
+        # self.helpBtn.setFixedWidth(200)
 
         self.runBtn = QPushButton('Run')
-        self.runBtn.setFixedWidth(200)
+        # self.runBtn.setFixedWidth(200)
 
         self.cancelBtn = QPushButton('Cancel')
-        self.cancelBtn.setFixedWidth(200)
+        # self.cancelBtn.setFixedWidth(200)
 
         btnLayout.addWidget(self.helpBtn, 1, alignment=Qt.AlignRight)
         btnLayout.addWidget(self.runBtn, 0, alignment=Qt.AlignRight)
@@ -102,9 +102,9 @@ class DetectorUi(QMainWindow):
         """Create display to view script output"""
         self.outputView = QPlainTextEdit()
         self.outputView.setFont(QFont('Courier New'))
-        self.outputView.setMinimumHeight(500)
+        self.outputView.setMinimumHeight(250)
         # self.outputView.setReadOnly(True)
-        self.outputView.setStyleSheet("margin: 20px")
+        self.outputView.setStyleSheet("margin: 10px")
         self.generalLayout.addWidget(self.outputView)
 
     def _createProgressIndicator(self):
@@ -170,8 +170,9 @@ class DetectorUi(QMainWindow):
         """Set outputView's text."""
         # self.outputView.appendPlainText(text)
         self.outputView.moveCursor(QTextCursor.End)
-        self.outputView.insertPlainText(text)
-        self.outputView.update()
+        if(text != ""):
+            self.outputView.insertPlainText(text)
+            self.outputView.update()
 
     def setDisplayText(self, text):
         """Set outputView's text."""
